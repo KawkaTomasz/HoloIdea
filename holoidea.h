@@ -16,8 +16,7 @@ namespace Ui {
 class HoloIdea;
 }
 
-class HoloIdea : public QMainWindow
-{
+class HoloIdea : public QMainWindow {
     Q_OBJECT
 
 public:

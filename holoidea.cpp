@@ -20,8 +20,7 @@
 
 HoloIdea::HoloIdea(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::HoloIdea)
-{
+    ui(new Ui::HoloIdea) {
     ui->setupUi(this);
 
     initMenuBar();
@@ -35,8 +34,7 @@ HoloIdea::HoloIdea(QWidget *parent) :
     imageFile = new QFile();
 }
 
-HoloIdea::~HoloIdea()
-{
+HoloIdea::~HoloIdea() {
     if(imageFile->isOpen())
         imageFile->close();
     delete imageFile;
@@ -49,8 +47,7 @@ HoloIdea::~HoloIdea()
 
 
 
-static void initializeImageFileDialog(QFileDialog &dialog, QFileDialog::AcceptMode acceptMode)
-{
+static void initializeImageFileDialog(QFileDialog &dialog, QFileDialog::AcceptMode acceptMode) {
     static bool firstDialog = true;
 
     if (firstDialog) {
@@ -94,18 +91,15 @@ void HoloIdea::save() {
     }
 }
 
-void HoloIdea::zoomIn()
-{
+void HoloIdea::zoomIn() {
     ui->graphicsView->scale(keyboardZoomFactor, keyboardZoomFactor);
 }
 
-void HoloIdea::zoomOut()
-{
+void HoloIdea::zoomOut() {
     ui->graphicsView->scale(1.0 / keyboardZoomFactor, 1.0 / keyboardZoomFactor);
 }
 
-void HoloIdea::setImage(const QImage &newImage)
-{
+void HoloIdea::setImage(const QImage &newImage) {
     image = newImage;
 
     scene->clear();
@@ -117,8 +111,7 @@ void HoloIdea::setImage(const QImage &newImage)
 
 }
 
-bool HoloIdea::loadFile(const QString &fileName)
-{
+bool HoloIdea::loadFile(const QString &fileName) {
     if(imageFile->isOpen())
         imageFile->close();
     imageFile = new QFile(fileName);
@@ -166,56 +159,58 @@ bool HoloIdea::loadFile(const QString &fileName)
 }
 
 void HoloIdea::saveScript(const QString &fileName) {
+    /// First we need to remove the file format
     QString scriptFileName = fileName;
     int last_dot = scriptFileName.lastIndexOf('.');
     int left_length = scriptFileName.length() - last_dot;
     scriptFileName.remove(last_dot,left_length);
+    /// Add the ".SCRIPT" file format
     QFile file(scriptFileName + ".SCRIPT");
+    /// Choosen output file size
+    int size = ui->outputSizeComboBox->currentIndex()*1024;
+
     if ( file.open(QIODevice::ReadWrite) ) {
         QTextStream stream( &file );
-        stream << "// Create matrix " << scrpitMatrixSize << "\n";
+        stream << "(1) // Create matrix " << scrpitMatrixSize << "\n";
         stream << "(1) SetLambda(" << lambda << ")" << "\n";
         stream << "(1) SetSampling(" << sampling << ")" << "\n";
-        stream << "(1) propagation_start=" << propFrom << "\n";
-        stream << "(1) propagation_end=" << propTo << "\n";
-        stream << "(1) propagation_step=" << propStep << "\n";
-        stream << "(1) output_name=" << scriptOutput << "\n";
+        stream << "(1) // a - propagation start" << "\n";
+        stream << "(1) a=" << propFrom << "\n";
+        stream << "(1) // b - propagation end" << "\n";
+        stream << "(1) b=" << propTo << "\n";
+        stream << "(1) // c - propagation step" << "\n";
+        stream << "(1) c=" << propStep << "\n";
+        stream << "(1) // d - output file name" << "\n";
+        stream << "(1) d=" << scriptOutput << "\n";
         stream << "(1) CreatePlaneWave(1;0;0;0)" << "\n";
         stream << "(1) Import(0;0;0;0;0;0;2;0;0;" << fileName << ";0)" << "\n";
         stream << "(1) PropagationOnAxis(0;0;a;0;0;0;0;1;0)" << "\n";
-        stream << "(1) SaveAs(" << "nazwa_pliku_wyjsciowego" << "_+propagation_start" << "\n";
-        stream << "(1) Export(1," << "size" << ";" << "size" << ";output_name" << "_+propagation_start"<< ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) tmp_propagation=propagation_start"<< "\n";
+        stream << "(1) SaveAs(" << "reconstruction" << "_+a)" << "\n";
+        stream << "(1) Export(1," << size << ";" << size << ";d" << "_+a"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) // e - temporary propagation" << "\n";
+        stream << "(1) e=a"<< "\n";
         stream << "(1) Label: Loop" << "\n";
-        stream << "(1) PropagationOnAxis(0;0;propagation_step;0;0;0;0;1;0)" << "\n";
-        stream << "(1) tmp_propagation=tmp_propagation+propagation_step"<< "\n";
-        stream << "(1) SaveAs(nazwa_pliku_wyjsciowego" << "_+tmp_propagation)" <<"\n";
-        stream << "(1) Export(1," << "size" << ";" << "size" << "output_name_AMP" << "_+tmp_propagation" << ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) tmp_propagation>propagation_end"<< " ? GotoLabel: Loop" << "\n";
-        file.flush();
+        stream << "(1) PropagationOnAxis(0;0;c;0;0;0;0;1;0)" << "\n";
+        stream << "(1) e=e+c"<< "\n";
+        stream << "(1) SaveAs(reconstruction" << "_+e)" <<"\n";
+        stream << "(1) Export(1," << size << ";" << size << "d_AMP" << "_+e" << ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) e>b"<< " ? GotoLabel: Loop" << "\n";
+        file.flush(); // flush the file
         file.close();
     } else {
-        const QString error_message = tr("Error: Could not open file to script!");
+        /// Error condition
+        const QString error_message = tr("Error: Could not open file to save the script!");
         statusBar()->showMessage(error_message);
     }
 }
 
-bool HoloIdea::saveFile(const QString &fileName)
-{
-    /*vector<int> compression_params;
-    compression_params.push_back(CV_IMWRITE_PXM_BINARY);
-    compression_params.push_back(1);*/
-
-    /*cvImage = changeContrast(cvImage, contrast);
-    cvImage = changeBrightness(cvImage, brightness);
-    cvImage = gammaCorrection(cvImage, gamma);*/
-
+bool HoloIdea::saveFile(const QString &fileName) {
     tmpMat.copyTo(cvImage);
 
     const QString message = tr("Processing ... Please wait");
     statusBar()->showMessage(message);
 
-    if (pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 > image.width() && pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 > image.height())
+    if (pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 >= image.width() && pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 >= image.height())
         fillWithBlack(pow(2,(ui->outputSizeComboBox->currentIndex()))*1024);
     else {
         const QString message_error = tr("Error! Choosen output size is smaller than original size (%1x%1 < %2x%3)").arg(pow(2,(ui->outputSizeComboBox->currentIndex()))*1024).arg(image.width()).arg(image.height());
@@ -230,8 +225,7 @@ bool HoloIdea::saveFile(const QString &fileName)
     return true;
 }
 
-void HoloIdea::about()
-{
+void HoloIdea::about() {
     QMessageBox::about(this, tr("About Holo Idea"),
             tr("<p>The <b>Holo Idea</b> is application to edit images."
                " Main function of this application is to improve the contrast of the digital hologram images.</p>"
@@ -283,8 +277,7 @@ void HoloIdea::initMenuBar() {
     helpMenu->addAction(tr("&About"), this, &HoloIdea::about);
 }
 
-void HoloIdea::updateActions()
-{
+void HoloIdea::updateActions() {
     saveAct->setEnabled(!image.isNull());
     saveAsAct->setEnabled(!image.isNull());
     ui->brightnessSlider->setEnabled(!image.isNull());
@@ -345,8 +338,7 @@ void HoloIdea::wheelEvent(QWheelEvent *event) {
 
 #endif
 
-void HoloIdea::on_actionOpen_triggered()
-{
+void HoloIdea::on_actionOpen_triggered() {
     QString strFileName = QFileDialog::getOpenFileName();       // bring up open file dialog
 
     if(strFileName == "") {                                     // if file was not chosen
@@ -450,14 +442,14 @@ void HoloIdea::on_gammaSpinner_valueChanged(double value) {
 }
 
 void HoloIdea::on_equlizeHistrogramButton_clicked() {
-    tmpMat = equalizeHistogram(tmpMat);
+    cvImage = equalizeHistogram(tmpMat);
+    tmpMat = cvImage;
     QImage newImage = convertOpenCVMatToQtQImage(tmpMat);
     if(!newImage.isNull())
         setImage(newImage);
 }
 
-void HoloIdea::on_generateScriptCheckBox_clicked(bool checked)
-{
+void HoloIdea::on_generateScriptCheckBox_clicked(bool checked) {
     if (checked) {
         ui->matrixSizeComboBox->setEnabled(true);
         ui->wavelengthInput->setEnabled(true);
@@ -467,8 +459,7 @@ void HoloIdea::on_generateScriptCheckBox_clicked(bool checked)
         ui->propStepInput->setEnabled(true);
         ui->scriptOutputName->setEnabled(true);
         ui->saveScriptDataButton->setEnabled(true);
-    }
-    else {
+    } else {
         ui->matrixSizeComboBox->setEnabled(false);
         ui->wavelengthInput->setEnabled(false);
         ui->samplingInput->setEnabled(false);
@@ -480,8 +471,7 @@ void HoloIdea::on_generateScriptCheckBox_clicked(bool checked)
     }
 }
 
-void HoloIdea::on_saveScriptDataButton_clicked()
-{
+void HoloIdea::on_saveScriptDataButton_clicked() {
     scrpitMatrixSize = ui->matrixSizeComboBox->currentText();
     lambda = ui->wavelengthInput->text();
     sampling = ui->samplingInput->text();
