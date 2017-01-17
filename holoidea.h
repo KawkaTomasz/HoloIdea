@@ -28,38 +28,25 @@ protected:
     virtual void wheelEvent(QWheelEvent *event);
 
 private slots:
-
     void open();
-
     void saveAs();
-
     void save();
-
     void zoomIn();
-
     void zoomOut();
-
     void about();
-
     void on_actionOpen_triggered();
-
     void on_contrastSlider_valueChanged(int value);
-
     void on_contrastSpinner_valueChanged(double arg1);
-
     void on_brightnessSlider_valueChanged(int value);
-
     void on_brightnessSpinner_valueChanged(int arg1);
-
     void on_gammaSlider_valueChanged(int value);
-
     void on_gammaSpinner_valueChanged(double arg1);
-
     void on_equlizeHistrogramButton_clicked();
-
     void on_generateScriptCheckBox_clicked(bool checked);
-
     void on_saveScriptDataButton_clicked();
+    void on_generateMaskCheckBox_clicked(bool checked);
+    void on_displayCropAreaButton_clicked();
+    void on_cropButton_clicked();
 
 private:
     bool saveFile(const QString &fileName);
@@ -71,13 +58,19 @@ private:
     void updateImage(double tmpgamma, int tmpbrightness, double tmpcontrast);
     void updateHistogram(cv::Mat &mat);
     void resetProperties();
+    void displayCropArea();
+    bool cropImage();
+    void saveRect(int offset, const QString &fileName);
     void fillWithBlack(int size);
 
     Ui::HoloIdea *ui;
     QGraphicsScene *scene;
     cv::Mat cvImage;
     cv::Mat tmpMat;
+    cv::Mat tmpAreaMat;
     cv::Mat histImage;
+    cv::Mat Rect;
+    cv::Mat Mask;
 
     QImage HoloIdea::convertOpenCVMatToQtQImage(cv::Mat &mat);           // convert OpenCVMat to QtImage function
 
@@ -93,6 +86,12 @@ private:
     int brightness;
     double contrast;
     double gamma;
+
+    // crop inputs
+    int xMargin;
+    int yMargin;
+    int cropWidth;
+    int cropHeight;
 
     // script inputs
     QString scrpitMatrixSize;

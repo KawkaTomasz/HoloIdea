@@ -87,9 +87,14 @@ Mat equalizeHistogram(Mat &mat) {
   return equalizedMat;
 }
 
-Mat drawAnImageOverAnother(Mat &src, int size) {
+Mat createMask(int size) {
+    Mat mask(size, size, CV_8UC1, Scalar(0));
+    return mask;
+}
+
+Mat drawAnImageOverAnother(Mat &src, int size, int color) {
     // Create destination mat which will include the orignal one
-    Mat dst(size, size, CV_8UC1, Scalar(0));
+    Mat dst(size, size, CV_8UC1, Scalar(color));
     // These variables are used to calculate the range
     // in the center of dst mat for source matrix.
     int row_start = dst.rows / 2 - src.rows / 2;
@@ -99,4 +104,16 @@ Mat drawAnImageOverAnother(Mat &src, int size) {
 
     src.copyTo(dst.rowRange(row_start,row_end).colRange(col_start,col_end));
     return dst;
+}
+
+Mat cropMatrix(Mat &src ,int xM, int yM, int width, int height) {
+    Rect croppedRectangle = Rect(xM, yM, width, height);
+    Mat croppedMat = src(croppedRectangle);
+    return croppedMat;
+}
+
+Mat displayArea(Mat &src, int xM, int yM, int width, int height) {
+    Rect croppedRectangle = Rect(xM, yM, width, height);
+    rectangle(src,croppedRectangle,Scalar(0),2);
+    return src;
 }

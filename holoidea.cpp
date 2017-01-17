@@ -37,6 +37,7 @@ HoloIdea::HoloIdea(QWidget *parent) :
 HoloIdea::~HoloIdea() {
     if(imageFile->isOpen())
         imageFile->close();
+    delete scene;
     delete imageFile;
     delete saveAct;
     delete saveAsAct;
@@ -103,6 +104,9 @@ void HoloIdea::setImage(const QImage &newImage) {
     image = newImage;
 
     scene->clear();
+    delete scene;
+    scene = new QGraphicsScene(this);
+    ui->graphicsView->setScene(scene);
     QGraphicsItem *pixMapItem = new QGraphicsPixmapItem(QPixmap::fromImage(image));
     scene->addItem(pixMapItem);
 
@@ -158,16 +162,33 @@ bool HoloIdea::loadFile(const QString &fileName) {
     }
 }
 
+void HoloIdea::saveRect(int offset, const QString &fileName) {
+    QString maskName = fileName;
+    int last_slash = maskName.lastIndexOf('/');
+    int left_length = maskName.length() - last_slash;
+    maskName.remove(last_slash + 1, left_length);
+    maskName += "mask.bmp";
+    Rect = createMask(512 + offset);
+    Mask = drawAnImageOverAnother(Rect, pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 ,255);
+    cv::imwrite(maskName.toStdString(), Mask);
+}
+
 void HoloIdea::saveScript(const QString &fileName) {
     /// First we need to remove the file format
+    QString fileNameWithoutPath = fileName;
+    int last_slash = fileNameWithoutPath.lastIndexOf('/');
+    fileNameWithoutPath.remove(0,last_slash + 1);
+    int last_dot = fileNameWithoutPath.lastIndexOf('.');
+    int left_length = fileNameWithoutPath.length() - last_dot;
+    fileNameWithoutPath.remove(last_dot,left_length);
     QString scriptFileName = fileName;
-    int last_dot = scriptFileName.lastIndexOf('.');
-    int left_length = scriptFileName.length() - last_dot;
+    last_dot = scriptFileName.lastIndexOf('.');
+    left_length = scriptFileName.length() - last_dot;
     scriptFileName.remove(last_dot,left_length);
     /// Add the ".SCRIPT" file format
     QFile file(scriptFileName + ".SCRIPT");
     /// Choosen output file size
-    int size = ui->outputSizeComboBox->currentIndex()*1024;
+    int size = pow(2,(ui->outputSizeComboBox->currentIndex()))*1024;
 
     if ( file.open(QIODevice::ReadWrite) ) {
         QTextStream stream( &file );
@@ -180,21 +201,33 @@ void HoloIdea::saveScript(const QString &fileName) {
         stream << "(1) b=" << propTo << "\n";
         stream << "(1) // c - propagation step" << "\n";
         stream << "(1) c=" << propStep << "\n";
-        stream << "(1) // d - output file name" << "\n";
-        stream << "(1) d=" << scriptOutput << "\n";
         stream << "(1) CreatePlaneWave(1;0;0;0)" << "\n";
-        stream << "(1) Import(0;0;0;0;0;0;2;0;0;" << fileName << ";0)" << "\n";
+        stream << "(1) Import(0;0;0;0;0;0;2;0;0;" << fileNameWithoutPath << ";0)" << "\n";
         stream << "(1) PropagationOnAxis(0;0;a;0;0;0;0;1;0)" << "\n";
         stream << "(1) SaveAs(" << "reconstruction" << "_+a)" << "\n";
-        stream << "(1) Export(1," << size << ";" << size << ";d" << "_+a"<< ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) // e - temporary propagation" << "\n";
-        stream << "(1) e=a"<< "\n";
-        stream << "(1) Label: Loop" << "\n";
+        stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_+a"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Export(2;" << size << ";" << size << ";" << scriptOutput << "_phase_+a"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Multiply(mask)\n";
+        stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_rect_+a"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_rect_+a"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) c==0"<< " ? GotoLabel: Label2" << "\n";
+        stream << "(1) // g - temporary propagation" << "\n";
+        stream << "(1) g=a"<< "\n";
+        stream << "(1) Label: Label1" << "\n";
+        stream << "(1) CreatePlaneWave(1;0;0;0)" << "\n";
+        stream << "(1) Import(2;0;0;0;0;0;2;0;0;" << scriptOutput << "_phase_+g" << ";0)" << "\n";
+        stream << "(1) Import(1;1;0;0;0;0;2;0;0;" << scriptOutput << "_amplitude_+g" << ";0)" << "\n";
         stream << "(1) PropagationOnAxis(0;0;c;0;0;0;0;1;0)" << "\n";
-        stream << "(1) e=e+c"<< "\n";
-        stream << "(1) SaveAs(reconstruction" << "_+e)" <<"\n";
-        stream << "(1) Export(1," << size << ";" << size << "d_AMP" << "_+e" << ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) e>b"<< " ? GotoLabel: Loop" << "\n";
+        stream << "(1) g=g+c"<< "\n";
+        stream << "(1) SaveAs(reconstruction" << "_+g)" <<"\n";
+        stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_+g" << ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Export(2;" << size << ";" << size << ";" << scriptOutput << "_phase_+g" << ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_+g" << ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Multiply(mask)\n";
+        stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_rect_+g"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_rect_+g"<< ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) g>b"<< " ? GotoLabel: Label1" << "\n";
+        stream << "(1) Label: Label2" << "\n";
         file.flush(); // flush the file
         file.close();
     } else {
@@ -222,6 +255,8 @@ bool HoloIdea::saveFile(const QString &fileName) {
     statusBar()->showMessage(message2);
     if(ui->generateScriptCheckBox->checkState())
         saveScript(fileName);
+    if(ui->generateMaskCheckBox->checkState())
+        saveRect(ui->offsetInput->text().toInt(), fileName);
     return true;
 }
 
@@ -287,8 +322,15 @@ void HoloIdea::updateActions() {
     ui->gammaSlider->setEnabled(!image.isNull());
     ui->gammaSpinner->setEnabled(!image.isNull());
     ui->equlizeHistrogramButton->setEnabled(!image.isNull());
+    ui->outputSizeComboBox->setEnabled(!image.isNull());
     zoomInAct->setEnabled(!image.isNull());
     zoomOutAct->setEnabled(!image.isNull());
+    ui->xMarginCropInput->setEnabled(!image.isNull());
+    ui->yMarginCropInput->setEnabled(!image.isNull());
+    ui->cropButton->setEnabled(!image.isNull());
+    ui->displayCropAreaButton->setEnabled(!image.isNull());
+    ui->widthCropInput->setEnabled(!image.isNull());
+    ui->heightCropInput->setEnabled(!image.isNull());
 }
 
 void HoloIdea::updateImage(double tmpgamma, int tmpbrightness, double tmpcontrast) {
@@ -369,7 +411,7 @@ void HoloIdea::on_actionOpen_triggered() {
 }
 
 void HoloIdea::fillWithBlack(int size) {
-    cvImage = drawAnImageOverAnother(cvImage, size);
+    cvImage = drawAnImageOverAnother(cvImage, size, 0);
 }
 
 void HoloIdea::initTabs() {
@@ -397,6 +439,14 @@ void HoloIdea::initTabs() {
     ui->outputSizeComboBox->addItem("4096x4096");
     ui->outputSizeComboBox->addItem("8192x8192");
     ui->outputSizeComboBox->addItem("16384x16384");
+    ui->outputSizeComboBox->setEnabled(false);
+
+    ui->xMarginCropInput->setEnabled(false);
+    ui->yMarginCropInput->setEnabled(false);
+    ui->cropButton->setEnabled(false);
+    ui->displayCropAreaButton->setEnabled(false);
+    ui->widthCropInput->setEnabled(false);
+    ui->heightCropInput->setEnabled(false);
 
     ui->matrixSizeComboBox->setEnabled(false);
     ui->wavelengthInput->setEnabled(false);
@@ -406,6 +456,16 @@ void HoloIdea::initTabs() {
     ui->propStepInput->setEnabled(false);
     ui->scriptOutputName->setEnabled(false);
     ui->saveScriptDataButton->setEnabled(false);
+    ui->generateMaskCheckBox->setEnabled(false);
+    ui->offsetInput->setEnabled(false);
+
+    scrpitMatrixSize = "0x0";
+    lambda = "0";
+    sampling = "0";
+    propFrom = "0";
+    propTo = "0";
+    propStep = "0";
+    scriptOutput = "empty";
 }
 
 
@@ -459,6 +519,7 @@ void HoloIdea::on_generateScriptCheckBox_clicked(bool checked) {
         ui->propStepInput->setEnabled(true);
         ui->scriptOutputName->setEnabled(true);
         ui->saveScriptDataButton->setEnabled(true);
+        ui->generateMaskCheckBox->setEnabled(true);
     } else {
         ui->matrixSizeComboBox->setEnabled(false);
         ui->wavelengthInput->setEnabled(false);
@@ -468,6 +529,8 @@ void HoloIdea::on_generateScriptCheckBox_clicked(bool checked) {
         ui->propStepInput->setEnabled(false);
         ui->scriptOutputName->setEnabled(false);
         ui->saveScriptDataButton->setEnabled(false);
+        ui->generateMaskCheckBox->setEnabled(false);
+        ui->offsetInput->setEnabled(false);
     }
 }
 
@@ -481,4 +544,53 @@ void HoloIdea::on_saveScriptDataButton_clicked() {
     scriptOutput = ui->scriptOutputName->text();
     const QString message = tr("Info: Script data has been saved");
     statusBar()->showMessage(message);
+}
+
+void HoloIdea::on_generateMaskCheckBox_clicked(bool checked) {
+    if(checked)
+        ui->offsetInput->setEnabled(true);
+    else
+        ui->offsetInput->setEnabled(false);
+}
+
+
+void HoloIdea::on_displayCropAreaButton_clicked() {
+    xMargin = ui->xMarginCropInput->text().toInt();
+    yMargin = ui->yMarginCropInput->text().toInt();
+    cropWidth = ui->widthCropInput->text().toInt();
+    cropHeight = ui->heightCropInput->text().toInt();
+    if(xMargin < 0 || yMargin < 0 || cropWidth <=0 || cropHeight <= 0 ||
+       xMargin + cropWidth >= cvImage.cols || yMargin + cropHeight >= cvImage.rows) {
+        const QString error_message = tr("Error: Invalid crop data! Cannot display cropped area for these data");
+        statusBar()->showMessage(error_message);
+        return;
+    }
+
+    tmpMat.copyTo(tmpAreaMat);
+    displayArea(tmpAreaMat, xMargin, yMargin, cropWidth, cropHeight);
+    QImage newImage = convertOpenCVMatToQtQImage(tmpAreaMat);
+    if(!newImage.isNull())
+        setImage(newImage);
+}
+
+void HoloIdea::on_cropButton_clicked(){
+    xMargin = ui->xMarginCropInput->text().toInt();
+    yMargin = ui->yMarginCropInput->text().toInt();
+    cropWidth = ui->widthCropInput->text().toInt();
+    cropHeight = ui->heightCropInput->text().toInt();
+
+    if(xMargin < 0 || yMargin < 0 || cropWidth <=0 || cropHeight <= 0 ||
+       xMargin + cropWidth >= cvImage.cols || yMargin + cropHeight >= cvImage.rows) {
+        const QString error_message = tr("Error: Invalid crop data!");
+        statusBar()->showMessage(error_message);
+        return;
+    }
+
+    cvImage = cropMatrix(cvImage, xMargin, yMargin, cropWidth, cropHeight);
+    const QString message = tr("Info: Image has been cropped");
+    statusBar()->showMessage(message);
+    tmpMat = cvImage;
+    QImage newImage = convertOpenCVMatToQtQImage(tmpMat);
+    if(!newImage.isNull())
+        setImage(newImage);
 }

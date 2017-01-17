@@ -49,6 +49,21 @@ public:
     QLabel *histogramLabel;
     QPushButton *equlizeHistrogramButton;
     QLabel *infoLabel;
+    QLabel *label_15;
+    QHBoxLayout *horizontalLayout_14;
+    QLabel *label_10;
+    QLineEdit *xMarginCropInput;
+    QLabel *label_14;
+    QLineEdit *yMarginCropInput;
+    QHBoxLayout *horizontalLayout_15;
+    QLabel *label_12;
+    QLineEdit *widthCropInput;
+    QLabel *label_16;
+    QLineEdit *heightCropInput;
+    QHBoxLayout *horizontalLayout_16;
+    QPushButton *displayCropAreaButton;
+    QSpacerItem *horizontalSpacer;
+    QPushButton *cropButton;
     QHBoxLayout *horizontalLayout_12;
     QLabel *label_9;
     QComboBox *outputSizeComboBox;
@@ -88,6 +103,10 @@ public:
     QSpacerItem *horizontalSpacer_3;
     QLabel *label_5;
     QLineEdit *propStepInput;
+    QCheckBox *generateMaskCheckBox;
+    QHBoxLayout *horizontalLayout_13;
+    QLabel *label_3;
+    QLineEdit *offsetInput;
     QHBoxLayout *horizontalLayout_11;
     QLabel *label_8;
     QLineEdit *scriptOutputName;
@@ -99,7 +118,7 @@ public:
     {
         if (HoloIdea->objectName().isEmpty())
             HoloIdea->setObjectName(QStringLiteral("HoloIdea"));
-        HoloIdea->resize(1109, 762);
+        HoloIdea->resize(1097, 736);
         actionOpen = new QAction(HoloIdea);
         actionOpen->setObjectName(QStringLiteral("actionOpen"));
         centralWidget = new QWidget(HoloIdea);
@@ -133,10 +152,9 @@ public:
         General_Tab->setObjectName(QStringLiteral("General_Tab"));
         General_Tab->setAutoFillBackground(true);
         verticalLayout_2 = new QVBoxLayout(General_Tab);
-        verticalLayout_2->setSpacing(10);
+        verticalLayout_2->setSpacing(6);
         verticalLayout_2->setContentsMargins(11, 11, 11, 11);
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        verticalLayout_2->setContentsMargins(20, 20, 20, 20);
         label_11 = new QLabel(General_Tab);
         label_11->setObjectName(QStringLiteral("label_11"));
         label_11->setAlignment(Qt::AlignCenter);
@@ -177,6 +195,94 @@ public:
         infoLabel->setWordWrap(true);
 
         verticalLayout_2->addWidget(infoLabel);
+
+        label_15 = new QLabel(General_Tab);
+        label_15->setObjectName(QStringLiteral("label_15"));
+
+        verticalLayout_2->addWidget(label_15);
+
+        horizontalLayout_14 = new QHBoxLayout();
+        horizontalLayout_14->setSpacing(5);
+        horizontalLayout_14->setObjectName(QStringLiteral("horizontalLayout_14"));
+        label_10 = new QLabel(General_Tab);
+        label_10->setObjectName(QStringLiteral("label_10"));
+
+        horizontalLayout_14->addWidget(label_10);
+
+        xMarginCropInput = new QLineEdit(General_Tab);
+        xMarginCropInput->setObjectName(QStringLiteral("xMarginCropInput"));
+
+        horizontalLayout_14->addWidget(xMarginCropInput);
+
+        label_14 = new QLabel(General_Tab);
+        label_14->setObjectName(QStringLiteral("label_14"));
+
+        horizontalLayout_14->addWidget(label_14);
+
+        yMarginCropInput = new QLineEdit(General_Tab);
+        yMarginCropInput->setObjectName(QStringLiteral("yMarginCropInput"));
+
+        horizontalLayout_14->addWidget(yMarginCropInput);
+
+        horizontalLayout_14->setStretch(0, 3);
+        horizontalLayout_14->setStretch(1, 1);
+        horizontalLayout_14->setStretch(2, 3);
+        horizontalLayout_14->setStretch(3, 1);
+
+        verticalLayout_2->addLayout(horizontalLayout_14);
+
+        horizontalLayout_15 = new QHBoxLayout();
+        horizontalLayout_15->setSpacing(5);
+        horizontalLayout_15->setObjectName(QStringLiteral("horizontalLayout_15"));
+        label_12 = new QLabel(General_Tab);
+        label_12->setObjectName(QStringLiteral("label_12"));
+
+        horizontalLayout_15->addWidget(label_12);
+
+        widthCropInput = new QLineEdit(General_Tab);
+        widthCropInput->setObjectName(QStringLiteral("widthCropInput"));
+
+        horizontalLayout_15->addWidget(widthCropInput);
+
+        label_16 = new QLabel(General_Tab);
+        label_16->setObjectName(QStringLiteral("label_16"));
+
+        horizontalLayout_15->addWidget(label_16);
+
+        heightCropInput = new QLineEdit(General_Tab);
+        heightCropInput->setObjectName(QStringLiteral("heightCropInput"));
+
+        horizontalLayout_15->addWidget(heightCropInput);
+
+        horizontalLayout_15->setStretch(0, 3);
+        horizontalLayout_15->setStretch(1, 1);
+        horizontalLayout_15->setStretch(2, 3);
+        horizontalLayout_15->setStretch(3, 1);
+
+        verticalLayout_2->addLayout(horizontalLayout_15);
+
+        horizontalLayout_16 = new QHBoxLayout();
+        horizontalLayout_16->setSpacing(6);
+        horizontalLayout_16->setObjectName(QStringLiteral("horizontalLayout_16"));
+        displayCropAreaButton = new QPushButton(General_Tab);
+        displayCropAreaButton->setObjectName(QStringLiteral("displayCropAreaButton"));
+
+        horizontalLayout_16->addWidget(displayCropAreaButton);
+
+        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_16->addItem(horizontalSpacer);
+
+        cropButton = new QPushButton(General_Tab);
+        cropButton->setObjectName(QStringLiteral("cropButton"));
+
+        horizontalLayout_16->addWidget(cropButton);
+
+        horizontalLayout_16->setStretch(0, 2);
+        horizontalLayout_16->setStretch(1, 1);
+        horizontalLayout_16->setStretch(2, 2);
+
+        verticalLayout_2->addLayout(horizontalLayout_16);
 
         horizontalLayout_12 = new QHBoxLayout();
         horizontalLayout_12->setSpacing(6);
@@ -293,10 +399,20 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_4);
 
-        verticalLayout_2->setStretch(1, 5);
+        verticalLayout_2->setStretch(1, 89);
         verticalLayout_2->setStretch(2, 1);
-        verticalLayout_2->setStretch(3, 3);
+        verticalLayout_2->setStretch(3, 40);
         verticalLayout_2->setStretch(4, 1);
+        verticalLayout_2->setStretch(5, 1);
+        verticalLayout_2->setStretch(6, 1);
+        verticalLayout_2->setStretch(7, 1);
+        verticalLayout_2->setStretch(8, 2);
+        verticalLayout_2->setStretch(9, 1);
+        verticalLayout_2->setStretch(10, 1);
+        verticalLayout_2->setStretch(11, 1);
+        verticalLayout_2->setStretch(12, 1);
+        verticalLayout_2->setStretch(13, 1);
+        verticalLayout_2->setStretch(14, 1);
         tabWidget->addTab(General_Tab, QString());
         Script_Tab = new QWidget();
         Script_Tab->setObjectName(QStringLiteral("Script_Tab"));
@@ -433,6 +549,30 @@ public:
 
         verticalLayout_3->addLayout(horizontalLayout_9);
 
+        generateMaskCheckBox = new QCheckBox(Script_Tab);
+        generateMaskCheckBox->setObjectName(QStringLiteral("generateMaskCheckBox"));
+        generateMaskCheckBox->setEnabled(true);
+
+        verticalLayout_3->addWidget(generateMaskCheckBox);
+
+        horizontalLayout_13 = new QHBoxLayout();
+        horizontalLayout_13->setSpacing(6);
+        horizontalLayout_13->setObjectName(QStringLiteral("horizontalLayout_13"));
+        label_3 = new QLabel(Script_Tab);
+        label_3->setObjectName(QStringLiteral("label_3"));
+
+        horizontalLayout_13->addWidget(label_3);
+
+        offsetInput = new QLineEdit(Script_Tab);
+        offsetInput->setObjectName(QStringLiteral("offsetInput"));
+
+        horizontalLayout_13->addWidget(offsetInput);
+
+        horizontalLayout_13->setStretch(0, 1);
+        horizontalLayout_13->setStretch(1, 1);
+
+        verticalLayout_3->addLayout(horizontalLayout_13);
+
         horizontalLayout_11 = new QHBoxLayout();
         horizontalLayout_11->setSpacing(6);
         horizontalLayout_11->setObjectName(QStringLiteral("horizontalLayout_11"));
@@ -457,10 +597,6 @@ public:
         verticalLayout_3->addWidget(saveScriptDataButton);
 
         tabWidget->addTab(Script_Tab, QString());
-        generateScriptCheckBox->raise();
-        saveScriptDataButton->raise();
-        propFromInput->raise();
-        label_4->raise();
 
         horizontalLayout->addWidget(tabWidget);
 
@@ -469,7 +605,7 @@ public:
         HoloIdea->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(HoloIdea);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1109, 21));
+        menuBar->setGeometry(QRect(0, 0, 1097, 21));
         HoloIdea->setMenuBar(menuBar);
         statusBar = new QStatusBar(HoloIdea);
         statusBar->setObjectName(QStringLiteral("statusBar"));
@@ -491,6 +627,17 @@ public:
         histogramLabel->setText(QString());
         equlizeHistrogramButton->setText(QApplication::translate("HoloIdea", "Equalize Histogram", 0));
         infoLabel->setText(QString());
+        label_15->setText(QApplication::translate("HoloIdea", "Crop image:", 0));
+        label_10->setText(QApplication::translate("HoloIdea", "X-Margin [px]:", 0));
+        xMarginCropInput->setText(QApplication::translate("HoloIdea", "0", 0));
+        label_14->setText(QApplication::translate("HoloIdea", "Y-Margin [px]:", 0));
+        yMarginCropInput->setText(QApplication::translate("HoloIdea", "0", 0));
+        label_12->setText(QApplication::translate("HoloIdea", "Width [px]:", 0));
+        widthCropInput->setText(QApplication::translate("HoloIdea", "0", 0));
+        label_16->setText(QApplication::translate("HoloIdea", "Height [px]:", 0));
+        heightCropInput->setText(QApplication::translate("HoloIdea", "0", 0));
+        displayCropAreaButton->setText(QApplication::translate("HoloIdea", "Display crop area", 0));
+        cropButton->setText(QApplication::translate("HoloIdea", "Crop", 0));
         label_9->setText(QApplication::translate("HoloIdea", "Output size (0-filled around):", 0));
         brightnessLabel->setText(QApplication::translate("HoloIdea", "Brightness", 0));
         contrastLabel->setText(QApplication::translate("HoloIdea", "Contrast", 0));
@@ -508,6 +655,9 @@ public:
         propToInput->setText(QApplication::translate("HoloIdea", "0", 0));
         label_5->setText(QApplication::translate("HoloIdea", "step:", 0));
         propStepInput->setText(QApplication::translate("HoloIdea", "0", 0));
+        generateMaskCheckBox->setText(QApplication::translate("HoloIdea", "Generate Rectus Mask", 0));
+        label_3->setText(QApplication::translate("HoloIdea", "Offset [px]:", 0));
+        offsetInput->setText(QApplication::translate("HoloIdea", "0", 0));
         label_8->setText(QApplication::translate("HoloIdea", "Name of the LS result:", 0));
         scriptOutputName->setText(QApplication::translate("HoloIdea", "output", 0));
         saveScriptDataButton->setText(QApplication::translate("HoloIdea", "Save", 0));
