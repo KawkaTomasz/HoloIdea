@@ -163,31 +163,46 @@ bool HoloIdea::loadFile(const QString &fileName) {
 }
 
 void HoloIdea::saveRect(int offset, const QString &fileName) {
+    /// Create mask destination filename
+    int mask_size = cvImage.rows + offset;
     QString maskName = fileName;
     int last_slash = maskName.lastIndexOf('/');
     int left_length = maskName.length() - last_slash;
     maskName.remove(last_slash + 1, left_length);
-    maskName += "mask.bmp";
-    Rect = createMask(512 + offset);
+
+    maskName += QString("mask_%1.bmp").arg(mask_size);
+    /// Create mask and outfill with white
+    Rect = createMask(mask_size);
     Mask = drawAnImageOverAnother(Rect, pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 ,255);
     cv::imwrite(maskName.toStdString(), Mask);
 }
 
-void HoloIdea::saveScript(const QString &fileName) {
-    /// First we need to remove the file format
+QString HoloIdea::cutFilePath(const QString &fileName) {
     QString fileNameWithoutPath = fileName;
     int last_slash = fileNameWithoutPath.lastIndexOf('/');
     fileNameWithoutPath.remove(0,last_slash + 1);
     int last_dot = fileNameWithoutPath.lastIndexOf('.');
     int left_length = fileNameWithoutPath.length() - last_dot;
     fileNameWithoutPath.remove(last_dot,left_length);
-    QString scriptFileName = fileName;
-    last_dot = scriptFileName.lastIndexOf('.');
-    left_length = scriptFileName.length() - last_dot;
-    scriptFileName.remove(last_dot,left_length);
+    return fileNameWithoutPath;
+}
+
+QString HoloIdea::cutFileExtension(const QString &fileName) {
+    QString fileNameWithoutExt = fileName;
+    int last_dot = fileNameWithoutExt.lastIndexOf('.');
+    int left_length = fileNameWithoutExt.length() - last_dot;
+    fileNameWithoutExt.remove(last_dot,left_length);
+    return fileNameWithoutExt;
+}
+
+void HoloIdea::saveScript(const QString &fileName) {
+    /// First we need to remove the file format and extension
+    QString fileNameWithoutPath = cutFilePath(fileName);
+    QString scriptFileName = cutFileExtension(fileName);
     /// Add the ".SCRIPT" file format
     QFile file(scriptFileName + ".SCRIPT");
     /// Choosen output file size
+    int mask_size = cvImage.rows + ui->offsetInput->text().toInt();
     int size = pow(2,(ui->outputSizeComboBox->currentIndex()))*1024;
 
     if ( file.open(QIODevice::ReadWrite) ) {
@@ -202,31 +217,21 @@ void HoloIdea::saveScript(const QString &fileName) {
         stream << "(1) // c - propagation step" << "\n";
         stream << "(1) c=" << propStep << "\n";
         stream << "(1) CreatePlaneWave(1;0;0;0)" << "\n";
+        stream << "(1) Import(0;0;0;0;0;0;2;0;0;mask_" << mask_size << ";0)" << "\n";
+        stream << "(1) SaveAs(mask_" << mask_size << ")" << "\n";
+        stream << "(1) Label: Label1" << "\n";
+        stream << "(1) CreatePlaneWave(1;0;0;0)" << "\n";
         stream << "(1) Import(0;0;0;0;0;0;2;0;0;" << fileNameWithoutPath << ";0)" << "\n";
         stream << "(1) PropagationOnAxis(0;0;a;0;0;0;0;1;0)" << "\n";
         stream << "(1) SaveAs(" << "reconstruction" << "_+a)" << "\n";
         stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_+a"<< ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) Export(2;" << size << ";" << size << ";" << scriptOutput << "_phase_+a"<< ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) Multiply(mask)\n";
+        stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_+a" << ";0;0;0;0;0;255;1)" << "\n";
+        stream << "(1) Multiply(mask_" << mask_size << ")\n";
         stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_rect_+a"<< ";0;0;0;0;0;255;1)" << "\n";
         stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_rect_+a"<< ";0;0;0;0;0;255;1)" << "\n";
         stream << "(1) c==0"<< " ? GotoLabel: Label2" << "\n";
-        stream << "(1) // g - temporary propagation" << "\n";
-        stream << "(1) g=a"<< "\n";
-        stream << "(1) Label: Label1" << "\n";
-        stream << "(1) CreatePlaneWave(1;0;0;0)" << "\n";
-        stream << "(1) Import(2;0;0;0;0;0;2;0;0;" << scriptOutput << "_phase_+g" << ";0)" << "\n";
-        stream << "(1) Import(1;1;0;0;0;0;2;0;0;" << scriptOutput << "_amplitude_+g" << ";0)" << "\n";
-        stream << "(1) PropagationOnAxis(0;0;c;0;0;0;0;1;0)" << "\n";
-        stream << "(1) g=g+c"<< "\n";
-        stream << "(1) SaveAs(reconstruction" << "_+g)" <<"\n";
-        stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_+g" << ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) Export(2;" << size << ";" << size << ";" << scriptOutput << "_phase_+g" << ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_+g" << ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) Multiply(mask)\n";
-        stream << "(1) Export(1;" << size << ";" << size << ";" << scriptOutput << "_amplitude_rect_+g"<< ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) Export(3;" << size << ";" << size << ";" << scriptOutput << "_log_rect_+g"<< ";0;0;0;0;0;255;1)" << "\n";
-        stream << "(1) g>b"<< " ? GotoLabel: Label1" << "\n";
+        stream << "(1) a=a+c"<< "\n";
+        stream << "(1) a>b-1"<< " ? GotoLabel: Label1" << "\n";
         stream << "(1) Label: Label2" << "\n";
         file.flush(); // flush the file
         file.close();
@@ -243,9 +248,13 @@ bool HoloIdea::saveFile(const QString &fileName) {
     const QString message = tr("Processing ... Please wait");
     statusBar()->showMessage(message);
 
-    if (pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 >= image.width() && pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 >= image.height())
+    if (pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 >= image.width() && pow(2,(ui->outputSizeComboBox->currentIndex()))*1024 >= image.height()) {
+        if(ui->generateMaskCheckBox->checkState())
+            saveRect(ui->offsetInput->text().toInt(), fileName);
+        if(ui->generateScriptCheckBox->checkState())
+            saveScript(fileName);
         fillWithBlack(pow(2,(ui->outputSizeComboBox->currentIndex()))*1024);
-    else {
+    } else {
         const QString message_error = tr("Error! Choosen output size is smaller than original size (%1x%1 < %2x%3)").arg(pow(2,(ui->outputSizeComboBox->currentIndex()))*1024).arg(image.width()).arg(image.height());
         statusBar()->showMessage(message_error);
         return false;
@@ -253,10 +262,6 @@ bool HoloIdea::saveFile(const QString &fileName) {
     cv::imwrite(fileName.toStdString(),cvImage);        // save image
     const QString message2 = tr("Wrote \"%1\"").arg(QDir::toNativeSeparators(fileName));
     statusBar()->showMessage(message2);
-    if(ui->generateScriptCheckBox->checkState())
-        saveScript(fileName);
-    if(ui->generateMaskCheckBox->checkState())
-        saveRect(ui->offsetInput->text().toInt(), fileName);
     return true;
 }
 

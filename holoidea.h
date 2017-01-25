@@ -49,6 +49,8 @@ private slots:
     void on_cropButton_clicked();
 
 private:
+    QString cutFilePath(const QString &fileName);
+    QString cutFileExtension(const QString &fileName);
     bool saveFile(const QString &fileName);
     void saveScript(const QString &fileName);
     void setImage(const QImage &newImage);
